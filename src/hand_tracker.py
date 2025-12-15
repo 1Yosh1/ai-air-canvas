@@ -19,6 +19,32 @@ class HandDetector:
         )
         self.mp_draw = mp.solutions.drawing_utils
         self.tip_ids = [4, 8, 12, 16, 20] # IDs for fingertips (Thumb, Index, Middle, Ring, Pinky)
+    
+    def fingers_up(self):
+        """
+        Returns a list of 5 booleans [Thumb, Index, Middle, Ring, Pinky]
+        True = Finger is up/extended
+        False = Finger is down/closed
+        """
+        fingers = []
+        if self.results.multi_hand_landmarks:
+            my_hand = self.results.multi_hand_landmarks[0]
+            
+            # Thumb (Different logic: check x coordinate relative to other joints)
+            # Assuming right hand: if tip is to the left of the knuckle, it's open
+            if my_hand.landmark[self.tip_ids[0]].x < my_hand.landmark[self.tip_ids[0] - 1].x:
+                fingers.append(1)
+            else:
+                fingers.append(0)
+
+            # 4 Fingers (Index to Pinky)
+            # Logic: If Tip (y) is higher (smaller value) than the PIP joint (y-2)
+            for id in range(1, 5):
+                if my_hand.landmark[self.tip_ids[id]].y < my_hand.landmark[self.tip_ids[id] - 2].y:
+                    fingers.append(1)
+                else:
+                    fingers.append(0)
+        return fingers
 
     def find_hands(self, img, draw=True):
         """
